@@ -52,6 +52,11 @@ def readArgs(argv):
         elif opt in ("-p", "--prefix"):
             prefix = arg
 
+    if config_in == '':
+        logging.error("You must provide a config file as input!")
+        printUsage()
+        sys.exit(2)
+
     if not custom_out:
         config_out = "%s_out" % config_in
 

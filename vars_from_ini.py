@@ -10,7 +10,7 @@ import getopt
 import logging
 import ConfigParser
 
-logging.basicConfig(stream=sys.stdout, level=logging.INFO, format='%(levelname)s:%(message)s')
+logging.basicConfig(stream=sys.stdout, level=logging.ERROR, format='%(levelname)s:%(message)s')
 logging.addLevelName(logging.ERROR, "\033[1;31m%s\033[1;0m" % logging.getLevelName(logging.ERROR))
 logging.addLevelName(logging.INFO, "\033[1;33m%s\033[1;0m" % logging.getLevelName(logging.INFO))
 
@@ -104,7 +104,7 @@ def generateVarDeclarations(configDic, prefix):
     declarations = []
     prefix = "%s__" % prefix
 
-    # Add ALLL_SECTIONS and NUMSECTIONS vars
+    # Add ALL_SECTIONS and NUMSECTIONS vars
     sections = ""
     numSections = 0
     for section in configDic.keys():

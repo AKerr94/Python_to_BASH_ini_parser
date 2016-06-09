@@ -8,66 +8,62 @@ GREEN='\033[0;32m'
 RED='\033[0;31m'
 NC='\033[0m'
 
-function check_prefix()
+function read_ini() 
 {
-    if ! [[ "${VARNAME_PREFIX}" =~ ^[a-zA-Z_][a-zA-Z0-9_]*$ ]] ;then
-        echo -e "${RED}read_ini: invalid prefix '${VARNAME_PREFIX}'${NC}" >&2
-        exit 1
-    fi
-}
+    # Pass in filename of config as arg 1 and prefix to use as arg 2
 
-function check_ini_file()
-{
-    if [ ! -r "$1" ] ;then
-        echo -e "${RED}read_ini: '${1}' doesn't exist or not readable${NC}" >&2
-        exit 1
-    fi
-}
+    function check_prefix()
+    {
+        if ! [[ "${VARNAME_PREFIX}" =~ ^[a-zA-Z_][a-zA-Z0-9_]*$ ]] ;then
+            echo -e "${RED}read_ini: invalid prefix '${VARNAME_PREFIX}'${NC}" >&2
+            exit 1
+        fi
+    }
 
-function validate_config_params() {
-    FILE="$1"
-    VARNAME_PREFIX="$2"   
+    function check_ini_file()
+    {
+        if [ ! -r "$1" ] ;then
+            echo -e "${RED}read_ini: '${1}' doesn't exist or not readable${NC}" >&2
+            exit 1
+        fi
+    }
 
-    check_ini_file "${FILE}"
+    function validate_config_params() {
+        CONFIG_FILE="$1"
+        VARNAME_PREFIX="$2"
 
-    if [ -z "${VARNAME_PREFIX}" ]; then
-        VARNAME_PREFIX="INI"
-    else
-        check_prefix
-    fi
-}
+        check_ini_file "${CONFIG_FILE}"
 
-function read_config() {
-    # Pass in filename of config and prefix to use
-    # Use python scrpt to generate variable declarations, and eval these
-    FILE="$1"
+        if [ -z "${VARNAME_PREFIX}" ]; then
+            VARNAME_PREFIX="INI"
+        else
+            check_prefix
+        fi
+    }
+
+    function read_config() {
+        # Use python script to generate variable declarations, and eval these
+        CONFIG_FILE="$1"
+        VARNAME_PREFIX="$2"
+
+        validate_config_params "${CONFIG_FILE}" "${VARNAME_PREFIX}"
+
+        python vars_from_ini.py -i "${CONFIG_FILE}" -p "${VARNAME_PREFIX}" -o "${CONFIG_FILE}.vars"
+
+        if [ ! $? -eq 0 ]; then
+            echo -e "${RED}Failed to load config ${CONFIG_FILE}${NC}"
+            exit 1
+        fi
+
+        while read -r line
+        do
+            eval "${line}"
+        done < "${CONFIG_FILE}.vars"
+
+        rm -f "${CONFIG_FILE}.vars"
+    }
+
+    CONFIG_FILE="$1"
     VARNAME_PREFIX="$2"
-
-    validate_config_params "${FILE}" "${VARNAME_PREFIX}"
-
-    python vars_from_ini.py -i "${FILE}" -p "${VARNAME_PREFIX}" -o "${FILE}.vars"
-
-    while read -r line
-    do 
-        eval "${line}"
-
-        # These following two lines are included to show how the variables are stored
-        # Print out each variables name and contents
-        IFS='=' read -ra ADDR <<< "${line}"
-        echo "${ADDR}=${!ADDR}"
-
-    done < "${FILE}.vars"
-
-    rm -f "${FILE}.vars"
+    read_config "${CONFIG_FILE}" "${VARNAME_PREFIX}"
 }
-
-
-# Simple example usage
-
-CONFIGFILEPATH="config.ini"
-CONFIGFILEPREFIX="PREFIX"
-
-read_config "${CONFIGFILEPATH}" "${CONFIGFILEPREFIX}"
-
-# At this point all parameters from the ini file will be available to use as BASH variables
-# e.g. PREFIX__SECTION__PARAM

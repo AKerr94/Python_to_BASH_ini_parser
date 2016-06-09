@@ -18,7 +18,7 @@ def printUsage():
     """
     Print usage message for running script
     """
-    print "rewrite_config.py -i <input> [-p <variable prefix>] [-o <output>]"
+    print "vars_from_ini.py -i <input> [-p <variable prefix>] [-o <output>]"
     print "Default prefix = INI, default output = <input>_out" 
 
 def readArgs(argv):
